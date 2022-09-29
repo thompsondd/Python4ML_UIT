@@ -1,9 +1,13 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics import r2_score
+import os
 
+# Salary Data
 print("Loading data")
-data = pd.read_csv(r"C:\Users\ACER\Desktop\Public_danhnt_python4ML\Salary_Data.csv")
+path_data = os.path.join(r".\data\Salary_Data.csv")
+data = pd.read_csv(path_data)
 x = data[["YearsExperience"]]
 y = data[["Salary"]]
 print("Load data successfully")
@@ -25,10 +29,12 @@ y_hat = model.predict(x_test)
 print("Predict test data successfully")
 
 print("\nEvaluating model")
-from sklearn.metrics import r2_score
 score = r2_score(y_test,y_hat)
 print(f"Evaluate model successfully: score={score}")          
 
-plt.scatter(x_train,y_train,color="r")
+fig, ax = plt.subplots()
+
+ax.plot(x, y, linewidth=2.0)
+plt.scatter(x_test,y_test,color="r")
 plt.plot(x_test,y_hat,color="b")
 plt.show()
