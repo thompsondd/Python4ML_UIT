@@ -1,13 +1,11 @@
 import os
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 
 class OnehotEncoder:
     def __init__(self):
@@ -32,23 +30,28 @@ class Model_AI:
         self.encoder={}
         self.best_model=None
         self.features = []
+        self.str_col=[]
     def check_str_type(self, word):
         return str(type(word)).split()[1].split("'")[1] == "str"
+
     def process_data(self, data_path):
         self.data = pd.read_csv(data_path)
+        self.origin_data = self.data.copy()
         self.features.append(list(self.data.columns))
-        target = self.data.columns[-1]
+        self.target = self.data.columns[-1]
         for i in self.data.columns:
             if self.check_str_type(self.data.iloc[0][i]):
                 LaEn = OnehotEncoder()
                 temp = self.data[i].unique()
                 LaEn.fit(temp)
+                self.str_col.append(i)
                 temp_data = np.array(LaEn.transform(self.data[i].values.reshape((-1,1)))).T
                 for id, key in enumerate(temp):
                     self.data[key]=temp_data[id]
                 self.encoder.update({i:LaEn})
                 self.data.drop(i,axis=1,inplace=True)
-        return (target,list(filter(lambda x: x!=target, self.data.columns)))
+        return (self.target,list(filter(lambda x: x!=self.target, self.data.columns)))
+
     def fit(self, data_path):
         rank={}
         target, feature = self.process_data(data_path)
@@ -67,6 +70,20 @@ class Model_AI:
         rfr_model.fit(xtrain,ytrain)
         rank.update({rfr_model.score(xtest,ytest):rfr_model})
         self.best_model = rank[max(list(rank.keys()))]
-        
+
+    def extract_vector(self,features):
+        feature_vector = []
+        for i in features.keys():
+            if i not in self.str_col:
+                feature_vector.append(features[i])
+        for i in self.str_col:
+            feature_vector.extend(self.encoder[i].transform([[features[i]]])[0])
+        return feature_vector
+
     def predict(self, features):
-        return self.best_model.predict(features)     
+        '''
+            features = { Position:..., Level:...}
+        '''
+        features = self.extract_vector(features)
+        return self.best_model.predict([features]).reshape(1)[0]
+
