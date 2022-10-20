@@ -87,6 +87,7 @@ y_hat = rfr_model.predict(x_test)
 print(f"Evaluate model RandomForestRegressor: \n\tr2: {r2_score(y_test,y_hat)}\n\tmse: {mean_squared_error(y_test,y_hat)}\n")
 
 '''
+<<<<<<< HEAD
 
 Thông qua thực nghiệm, mô hình RandomForestRegressor luôn đưa các dự đoán khá tốt trong cả 3 tập dữ liệu, ruy nhiên cần điều chỉnh tham số n_estimators có kết quả tốt nhất.
 
@@ -94,4 +95,9 @@ Thông qua thực nghiệm, mô hình RandomForestRegressor luôn đưa các d�
 
 Đối với mô hình SVM cho regression thì chỉ hoạt động không tốt đối với tập dữ liệu Salary_Data.csv, còn đối với các bộ dữ liệu còn lại thì mô hình cho ra các kết quả dự đoán khá tốt. 
 
+=======
+Thông qua thực nghiệm, mô hình RandomForestRegressor luôn đưa các dự đoán khá tốt trong cả 3 tập dữ liệu, ruy nhiên cần điều chỉnh tham số n_estimators có kết quả tốt nhất.
+Đối với mô hình LinearRegression thì chỉ hoạt động tốt đối với tập dữ liệu Salary_Data.csv, còn đối với các tập dữ liệu còn lại thì mô hình hoạt động không tốt.
+Đối với mô hình SVM cho regression thì chỉ hoạt động không tốt đối với tập dữ liệu Salary_Data.csv, còn đối với các bộ dữ liệu còn lại thì mô hình cho ra các kết quả dự đoán khá tốt. 
+>>>>>>> da1b9688e72143483276173b74c146853f510254
 '''
