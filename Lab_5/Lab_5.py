@@ -34,7 +34,7 @@ if data is not None:
         #st.write(f"Input={get_inputs}")
         #st.write(f"Best model={model.best_model}")
         st.success(f"Salary = {model_salary.predict(get_inputs)}")
-#function()
+
 st.markdown("""## 2. Dự báo lợi nhuận""")
 data = st.file_uploader("Tải file dữ liệu về lương để AI dự đoán",key="profit")
 if data is not None:
@@ -50,7 +50,7 @@ if data is not None:
                 get_inputs.update({i:st.text_input(f"Nhap {i}:",key=f"{i}")})
             else:
                 get_inputs.update({i:st.selectbox(f"Chon {i}",model.origin_data[i].unique(),key=f"{i}")})
-    if st.button("Dự đoán lương",key="profit"):
+    if st.button("Dự đoán lợi nhuận",key="profit"):
         for i in get_inputs:
             if i not in model.str_col:
                 get_inputs[i]=float(get_inputs[i])
