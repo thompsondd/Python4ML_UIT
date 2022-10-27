@@ -1,11 +1,10 @@
 import os
 import pandas as pd
 import numpy as np
-from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.linear_model import LinearRegression
-from sklearn.svm import SVR
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 
 class OnehotEncoder:
     def __init__(self):
@@ -24,22 +23,23 @@ class OnehotEncoder:
             ba.append(a.tolist())
         return ba
 
-class Model_AI:
-    def __init__(self):
+class Dataset:
+    def __init__(self,path_data):
         self.data=None
         self.encoder={}
-        self.best_model=None
         self.features = []
         self.str_col=[]
+        self.target_value,self.feature_value = None
+        self.origin_data = pd.read_csv(path_data)
+
     def check_str_type(self, word):
         return str(type(word)).split()[1].split("'")[1] == "str"
+    def process_data(self):
+        self.data = self.origin_data.copy()
 
-    def process_data(self, data_path):
-        self.data = pd.read_csv(data_path)
-        self.origin_data = self.data.copy()
         self.features.append(list(self.data.columns))
         self.target = self.data.columns[-1]
-        for i in self.data.columns:
+        for i in self.sett:
             if self.check_str_type(self.data.iloc[0][i]):
                 LaEn = OnehotEncoder()
                 temp = self.data[i].unique()
@@ -50,26 +50,51 @@ class Model_AI:
                     self.data[key]=temp_data[id]
                 self.encoder.update({i:LaEn})
                 self.data.drop(i,axis=1,inplace=True)
-        return (self.target,list(filter(lambda x: x!=self.target, self.data.columns)))
+        #self.target,list(filter(lambda x: x!=self.target, self.data.columns)))
 
-    def fit(self, data_path):
-        rank={}
-        target, feature = self.process_data(data_path)
+class Model_AI:
+    def __init__(self,dataset,setting):
+        self.data= dataset
+        self.setting = setting
+        self.history = {}
+        if self.setting["MAE"]:
+            self.history["MAE"]={}
+        if self.setting["MSE"]:
+            self.history["MSE"]={}
+
+    def fit(self):
+        target, feature = self.data.target_value, self.data.feature_value
         X = self.data[feature].values
         y = self.data[[target]].values
-        xtrain,xtest,ytrain,ytest = train_test_split(X,y, test_size = 0.3)
-        Linear_model = LinearRegression()
-        Linear_model.fit(xtrain,ytrain)
-        rank.update({Linear_model.score(xtest,ytest):Linear_model})
-        
-        svr_model = SVR(kernel="poly", degree=5)
-        svr_model.fit(xtrain,ytrain)
-        rank.update({svr_model.score(xtest,ytest):svr_model})
-        
-        rfr_model = RandomForestRegressor(n_estimators=500)
-        rfr_model.fit(xtrain,ytrain)
-        rank.update({rfr_model.score(xtest,ytest):rfr_model})
-        self.best_model = rank[max(list(rank.keys()))]
+        if self.setting["kflod"]:
+            kf = KFold(n_splits=self.setting["K"])
+            fold_id=0
+            for train_index, test_index in kf.split(X):
+                xtrain, xtest = X[train_index], X[test_index]
+                ytrain, ytest = y[train_index], y[test_index]
+
+                Linear_model = LinearRegression()
+                Linear_model.fit(xtrain,ytrain)
+                yhat = Linear_model.predict(xtest)
+                
+                if self.setting["MAE"]:
+                    self.history["MAE"].update({fold_id:mean_absolute_error(ytest,yhat)})
+                if self.setting["MSE"]:
+                    self.history["MSE"].update({fold_id:mean_squared_error(ytest,yhat)})
+                fold_id+=1
+        else:
+            xtrain,xtest,ytrain,ytest = train_test_split(X,y, test_size = self.setting["rate"])
+            Linear_model = LinearRegression()
+            Linear_model.fit(xtrain,ytrain)
+            yhat = Linear_model.predict(xtest)
+            if self.setting["MAE"]:
+                self.history["MAE"].update({0:mean_absolute_error(ytest,yhat)})
+            if self.setting["MSE"]:
+                self.history["MSE"].update({0:mean_squared_error(ytest,yhat)})
+        self.model = Linear_model
+    
+    def plot_history(self):
+        pass
 
     def extract_vector(self,features):
         feature_vector = []
