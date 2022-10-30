@@ -14,39 +14,55 @@ st.markdown("""
 ## 1. Dự báo lương
 """)
 data = st.file_uploader("Tải file dữ liệu về lương để AI dự đoán",key="data")
+setting={}
 if data is not None:
     byte_data=data.getvalue()
     with open(f"./data/{data.name}","wb+") as f:
         f.write(byte_data)
+    
     # Select input feature
     dataset = ml.Dataset(f"./data/{data.name}")
     st.dataframe(dataset.origin_data)
     get_feature_inputs={}
+    target = dataset.origin_data.columns[-1]
     st.write("Select features as input features")
-    for i in list(dataset.origin_data.columns):
-        if i !=dataset.target:
-            get_feature_inputs.update({i:st.checkbox(f"{i}",key=f"feature_select_{i}")})
+    for i in list(dataset.origin_data.columns)[:-1]:
+        get_feature_inputs.update({i:st.checkbox(f"{i}",key=f"feature_select_{i}")})
+    
     # Select output feature
-    st.write(f"Output features: {dataset.target}")
-    # Select the rate of train dataset
-    rate = st.number_input("Enter the rate of train dataset",key="rate_train", value=0.1, min_value=0.1, max_value=1.0, step=0.01)
+    st.write(f"Output features: {target}")
+
     # Select K-Fold
     kfold = st.checkbox(f"K-Fold Cross validation",key="kfold")
+    setting.update({"kfold":kfold})
     if kfold:
-        K = st.number_input("Enter the rate of train dataset",key="rate_train", step=1)
+        K = st.number_input("Enter K",key="rate_train", step=1, min_value=2, value=2)
+        setting.update({"K":K})
+
+    # Select the rate of train dataset
+    if kfold == False:
+        rate = st.number_input("Enter the rate of train dataset",key="rate_train", value=0.1, min_value=0.1, max_value=1.0, step=0.01)
+        setting.update({"rate":rate})
+
     # Select metric
     st.write("Select at least one metric for evaluating model")
-    mae = st.checkbox(f"MAE",key="MAE")
-    mse = st.checkbox(f"MSE",key="MSE")
-    
-
+    setting.update({"MAE":st.checkbox(f"MAE",key="MAE")})
+    setting.update({"MSE":st.checkbox(f"MSE",key="MSE")})
     
     if st.button("Run",key="run"):
-        if (mae or mse)==False:
+        if (setting["MAE"] or setting["MSE"])==False:
             st.error("Please select a metric for evaluation")
         else:
-                model_salary = ml.Model_AI()
-                model_salary.fit(f"./data/{data.name}")
+            feature_selected = [ i for i in get_feature_inputs.keys() if get_feature_inputs[i]]
+            if len(feature_selected)<1:
+                st.error("Please select at least a feature")
+            else:
+                setting.update({"feature_list":feature_selected,"target":target})
+                model = ml.Model_AI(dataset, setting)
+                model.fit()
+                #h = pd.DataFrame(model.history)
+                #st.dataframe(h)
+                st.pyplot(model.plot_history())
         #for i in get_inputs:
         #    if i not in model_salary.str_col:
         #        get_inputs[i]=float(get_inputs[i])
