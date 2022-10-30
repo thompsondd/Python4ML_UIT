@@ -92,29 +92,39 @@ class Model_AI:
             if self.setting["MSE"]:
                 self.history["MSE"].update({0:mean_squared_error(ytest,yhat)})
         self.model = Linear_model
-        print(self.history)
+        #print(self.history)
 
     def plot_history(self):
         data = pd.DataFrame(self.history)
         labels = list(data.index)
-        mse = [i for i in data["MSE"].values]
-        mae = [i for i in data["MAE"].values]
+        fig, ax = plt.subplots()
+        title = []
         if len(labels)>1:
             labels +=["Mean"]
-            mse +=[np.mean(data["MSE"].values)]
-            mae += [np.mean(data["MAE"].values)]
 
         x = np.arange(len(labels))  # the label locations
         width = 0.35  # the width of the bars
+        try:
+            mse = [i for i in data["MSE"].values]
+            if "Mean" in labels:
+                mse +=[np.mean(data["MSE"].values)]
+            rects1= ax.bar(x - width/2, mse, width, label='MSE', color="green")
+            title.append("MSE")
+        except:
+            pass
 
-        fig, ax = plt.subplots()
-        rects1= ax.bar(x - width/2, mse, width, label='MSE', color="green")
-        rects2=ax.bar(x + width/2, mae, width, label='MAE',color="blue")
-
+        try:
+            mae = [i for i in data["MAE"].values]
+            if "Mean" in labels:
+                mae += [np.mean(data["MAE"].values)]
+            rects2=ax.bar(x + width/2, mae, width, label='MAE',color="blue")
+            title.append("MSE")
+        except:
+            pass
         # Add some text for labels, title and custom x-axis tick labels, etc.
         ax.set_ylabel('Error')
         ax.set_yscale("log")
-        ax.set_title('Error of MSE and MAE')
+        ax.set_title(f'Error of {title[0] if len(title)>0 else "and".join(title)}')
         ax.set_xticks(x, labels)
         ax.legend()
 
