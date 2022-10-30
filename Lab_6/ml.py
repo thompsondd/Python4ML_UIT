@@ -5,6 +5,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
+import matplotlib.pyplot as plt
 
 class OnehotEncoder:
     def __init__(self):
@@ -29,17 +30,15 @@ class Dataset:
         self.encoder={}
         self.features = []
         self.str_col=[]
-        self.target_value,self.feature_value = None
         self.origin_data = pd.read_csv(path_data)
 
     def check_str_type(self, word):
         return str(type(word)).split()[1].split("'")[1] == "str"
-    def process_data(self):
-        self.data = self.origin_data.copy()
-
+    def process_data(self, data):
+        self.data = data.copy()
         self.features.append(list(self.data.columns))
         self.target = self.data.columns[-1]
-        for i in self.sett:
+        for i in self.data.columns:
             if self.check_str_type(self.data.iloc[0][i]):
                 LaEn = OnehotEncoder()
                 temp = self.data[i].unique()
@@ -50,8 +49,11 @@ class Dataset:
                     self.data[key]=temp_data[id]
                 self.encoder.update({i:LaEn})
                 self.data.drop(i,axis=1,inplace=True)
-        #self.target,list(filter(lambda x: x!=self.target, self.data.columns)))
-
+        return self.target, list(filter(lambda x: x!=self.target, self.data.columns))
+    def get_feature_target(self,features_list,target):
+        features_list+=[target]
+        target_col,feature_col = self.process_data(self.origin_data[features_list])
+        return self.data[feature_col].values, self.data[[target_col]].values
 class Model_AI:
     def __init__(self,dataset,setting):
         self.data= dataset
@@ -63,10 +65,8 @@ class Model_AI:
             self.history["MSE"]={}
 
     def fit(self):
-        target, feature = self.data.target_value, self.data.feature_value
-        X = self.data[feature].values
-        y = self.data[[target]].values
-        if self.setting["kflod"]:
+        X,y = self.data.get_feature_target(self.setting["feature_list"],self.setting["target"])
+        if self.setting["kfold"]:
             kf = KFold(n_splits=self.setting["K"])
             fold_id=0
             for train_index, test_index in kf.split(X):
@@ -83,7 +83,7 @@ class Model_AI:
                     self.history["MSE"].update({fold_id:mean_squared_error(ytest,yhat)})
                 fold_id+=1
         else:
-            xtrain,xtest,ytrain,ytest = train_test_split(X,y, test_size = self.setting["rate"])
+            xtrain,xtest,ytrain,ytest = train_test_split(X,y, test_size = 1-self.setting["rate"])
             Linear_model = LinearRegression()
             Linear_model.fit(xtrain,ytrain)
             yhat = Linear_model.predict(xtest)
@@ -92,9 +92,37 @@ class Model_AI:
             if self.setting["MSE"]:
                 self.history["MSE"].update({0:mean_squared_error(ytest,yhat)})
         self.model = Linear_model
-    
+        print(self.history)
+
     def plot_history(self):
-        pass
+        data = pd.DataFrame(self.history)
+        labels = list(data.index)
+        mse = [i for i in data["MSE"].values]
+        mae = [i for i in data["MAE"].values]
+        if len(labels)>1:
+            labels +=["Mean"]
+            mse +=[np.mean(data["MSE"].values)]
+            mae += [np.mean(data["MAE"].values)]
+
+        x = np.arange(len(labels))  # the label locations
+        width = 0.35  # the width of the bars
+
+        fig, ax = plt.subplots()
+        rects1= ax.bar(x - width/2, mse, width, label='MSE', color="green")
+        rects2=ax.bar(x + width/2, mae, width, label='MAE',color="blue")
+
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_ylabel('Error')
+        ax.set_yscale("log")
+        ax.set_title('Error of MSE and MAE')
+        ax.set_xticks(x, labels)
+        ax.legend()
+
+        #ax.bar_label(rects1, padding=3)
+        #ax.bar_label(rects2, padding=3)
+
+        fig.tight_layout()
+        return fig
 
     def extract_vector(self,features):
         feature_vector = []
