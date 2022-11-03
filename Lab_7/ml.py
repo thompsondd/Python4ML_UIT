@@ -32,6 +32,8 @@ class Dataset:
         self.features = []
         self.str_col=[]
         self.origin_data = pd.read_csv(path_data)
+        if len(self.origin_data.columns)==1:
+            self.origin_data = pd.read_table(path_data,sep=";")
 
     def check_str_type(self, word):
         return str(type(word)).split()[1].split("'")[1] == "str"
@@ -74,9 +76,9 @@ class Model_AI:
                 xtrain, xtest = X[train_index], X[test_index]
                 ytrain, ytest = y[train_index], y[test_index]
 
-                Linear_model = LogisticRegression()
-                Linear_model.fit(xtrain,ytrain)
-                yhat = Linear_model.predict(xtest)
+                Model = LogisticRegression()
+                Model.fit(xtrain,ytrain)
+                yhat = Model.predict(xtest)
                 #print(yhat)
                 if self.setting["Acc"]:
                     self.history["Acc"].update({fold_id:accuracy_score(ytest,yhat)})
@@ -85,14 +87,14 @@ class Model_AI:
                 fold_id+=1
         else:
             xtrain,xtest,ytrain,ytest = train_test_split(X,y, test_size = 1-self.setting["rate"])
-            Linear_model = LogisticRegression()
-            Linear_model.fit(xtrain,ytrain)
-            yhat = Linear_model.predict(xtest)
+            Model = LogisticRegression()
+            Model.fit(xtrain,ytrain)
+            yhat = Model.predict(xtest)
             if self.setting["Acc"]:
                 self.history["Acc"].update({0:accuracy_score(ytest,yhat)})
             if self.setting["F1"]:
                 self.history["F1"].update({0:f1_score(ytest,yhat)})
-        self.model = Linear_model
+        self.model = Model
         print(self.history)
 
     def plot_history(self):
