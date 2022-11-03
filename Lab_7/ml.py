@@ -1,10 +1,11 @@
 import os
 import pandas as pd
 import numpy as np
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, mean_absolute_error, accuracy_score, f1_score
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
+from sklearn.preprocessing import Normalizer
 import matplotlib.pyplot as plt
 
 class OnehotEncoder:
@@ -59,10 +60,10 @@ class Model_AI:
         self.data= dataset
         self.setting = setting
         self.history = {}
-        if self.setting["MAE"]:
-            self.history["MAE"]={}
-        if self.setting["MSE"]:
-            self.history["MSE"]={}
+        if self.setting["Acc"]:
+            self.history["Acc"]={}
+        if self.setting["F1"]:
+            self.history["F1"]={}
 
     def fit(self):
         X,y = self.data.get_feature_target(self.setting["feature_list"],self.setting["target"])
@@ -73,26 +74,26 @@ class Model_AI:
                 xtrain, xtest = X[train_index], X[test_index]
                 ytrain, ytest = y[train_index], y[test_index]
 
-                Linear_model = LinearRegression()
+                Linear_model = LogisticRegression()
                 Linear_model.fit(xtrain,ytrain)
                 yhat = Linear_model.predict(xtest)
-                
-                if self.setting["MAE"]:
-                    self.history["MAE"].update({fold_id:mean_absolute_error(ytest,yhat)})
-                if self.setting["MSE"]:
-                    self.history["MSE"].update({fold_id:mean_squared_error(ytest,yhat)})
+                #print(yhat)
+                if self.setting["Acc"]:
+                    self.history["Acc"].update({fold_id:accuracy_score(ytest,yhat)})
+                if self.setting["F1"]:
+                    self.history["F1"].update({fold_id:f1_score(ytest,yhat)})
                 fold_id+=1
         else:
             xtrain,xtest,ytrain,ytest = train_test_split(X,y, test_size = 1-self.setting["rate"])
-            Linear_model = LinearRegression()
+            Linear_model = LogisticRegression()
             Linear_model.fit(xtrain,ytrain)
             yhat = Linear_model.predict(xtest)
-            if self.setting["MAE"]:
-                self.history["MAE"].update({0:mean_absolute_error(ytest,yhat)})
-            if self.setting["MSE"]:
-                self.history["MSE"].update({0:mean_squared_error(ytest,yhat)})
+            if self.setting["Acc"]:
+                self.history["Acc"].update({0:accuracy_score(ytest,yhat)})
+            if self.setting["F1"]:
+                self.history["F1"].update({0:f1_score(ytest,yhat)})
         self.model = Linear_model
-        #print(self.history)
+        print(self.history)
 
     def plot_history(self):
         data = pd.DataFrame(self.history)
@@ -105,25 +106,25 @@ class Model_AI:
         x = np.arange(len(labels))  # the label locations
         width = 0.35  # the width of the bars
         try:
-            mse = [i for i in data["MSE"].values]
+            F1 = [i for i in data["F1"].values]
             if "Mean" in labels:
-                mse +=[np.mean(data["MSE"].values)]
-            rects1= ax.bar(x - width/2, mse, width, label='MSE', color="green")
-            title.append("MSE")
+                F1 +=[np.mean(data["F1"].values)]
+            rects1= ax.bar(x - width/2, F1, width, label='F1', color="green")
+            title.append("F1")
         except:
             pass
 
         try:
-            mae = [i for i in data["MAE"].values]
+            Acc = [i for i in data["Acc"].values]
             if "Mean" in labels:
-                mae += [np.mean(data["MAE"].values)]
-            rects2=ax.bar(x + width/2, mae, width, label='MAE',color="blue")
-            title.append("MSE")
+                Acc += [np.mean(data["Acc"].values)]
+            rects2=ax.bar(x + width/2, Acc, width, label='Acc',color="blue")
+            title.append("Acc")
         except:
             pass
         # Add some text for labels, title and custom x-axis tick labels, etc.
         ax.set_ylabel('Error')
-        ax.set_yscale("log")
+        #ax.set_yscale("log")
         ax.set_title(f'Error of {title[0] if len(title)>0 else "and".join(title)}')
         ax.set_xticks(x, labels)
         ax.legend()
