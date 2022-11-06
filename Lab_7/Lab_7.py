@@ -45,10 +45,10 @@ if data is not None:
     # Select metric
     st.write("Select at least one metric for evaluating model")
     setting.update({"F1":st.checkbox(f"F1",key="F1")})
-    setting.update({"Acc":st.checkbox(f"Acc",key="Acc")})
+    setting.update({"LogLoss":st.checkbox(f"LogLoss",key="LogLoss")})
     
     if st.button("Run",key="run"):
-        if (setting["F1"] or setting["Acc"])==False:
+        if (setting["F1"] or setting["LogLoss"])==False:
             st.error("Please select a metric for evaluation")
         else:
             feature_selected = [ i for i in get_feature_inputs.keys() if get_feature_inputs[i]]

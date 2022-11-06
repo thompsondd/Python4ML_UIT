@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
-from sklearn.metrics import mean_squared_error, mean_absolute_error, accuracy_score, f1_score
+from sklearn.metrics import mean_squared_error, mean_absolute_error, log_loss, f1_score
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
@@ -62,8 +62,8 @@ class Model_AI:
         self.data= dataset
         self.setting = setting
         self.history = {}
-        if self.setting["Acc"]:
-            self.history["Acc"]={}
+        if self.setting["LogLoss"]:
+            self.history["LogLoss"]={}
         if self.setting["F1"]:
             self.history["F1"]={}
 
@@ -79,21 +79,23 @@ class Model_AI:
                 Model = LogisticRegression()
                 Model.fit(xtrain,ytrain)
                 yhat = Model.predict(xtest)
+                yhat_p = Model.predict_proba(xtest)
                 #print(yhat)
-                if self.setting["Acc"]:
-                    self.history["Acc"].update({fold_id:accuracy_score(ytest,yhat)})
+                if self.setting["LogLoss"]:
+                    self.history["LogLoss"].update({fold_id:log_loss(ytest,yhat_p)})
                 if self.setting["F1"]:
-                    self.history["F1"].update({fold_id:f1_score(ytest,yhat)})
+                    self.history["F1"].update({fold_id:f1_score(ytest,yhat, average='macro')})
                 fold_id+=1
         else:
             xtrain,xtest,ytrain,ytest = train_test_split(X,y, test_size = 1-self.setting["rate"])
             Model = LogisticRegression()
             Model.fit(xtrain,ytrain)
             yhat = Model.predict(xtest)
-            if self.setting["Acc"]:
-                self.history["Acc"].update({0:accuracy_score(ytest,yhat)})
+            yhat_p = Model.predict_proba(xtest)
+            if self.setting["LogLoss"]:
+                self.history["LogLoss"].update({0:log_loss(ytest,yhat_p)})
             if self.setting["F1"]:
-                self.history["F1"].update({0:f1_score(ytest,yhat)})
+                self.history["F1"].update({0:f1_score(ytest,yhat, average='macro')})
         self.model = Model
         print(self.history)
 
@@ -117,17 +119,17 @@ class Model_AI:
             pass
 
         try:
-            Acc = [i for i in data["Acc"].values]
+            LogLoss = [i for i in data["LogLoss"].values]
             if "Mean" in labels:
-                Acc += [np.mean(data["Acc"].values)]
-            rects2=ax.bar(x + width/2, Acc, width, label='Acc',color="blue")
-            title.append("Acc")
+                LogLoss += [np.mean(data["LogLoss"].values)]
+            rects2=ax.bar(x + width/2, LogLoss, width, label='LogLoss',color="blue")
+            title.append("LogLoss")
         except:
             pass
         # Add some text for labels, title and custom x-axis tick labels, etc.
         ax.set_ylabel('Error')
         #ax.set_yscale("log")
-        ax.set_title(f'Error of {title[0] if len(title)>0 else "and".join(title)}')
+        ax.set_title(f'Error of {title[0] if len(title)<1 else "and".join(title)}')
         ax.set_xticks(x, labels)
         ax.legend()
 
