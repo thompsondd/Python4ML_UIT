@@ -84,7 +84,7 @@ class Model_AI:
                 if self.setting["LogLoss"]:
                     self.history["LogLoss"].update({fold_id:log_loss(ytest,yhat_p)})
                 if self.setting["F1"]:
-                    self.history["F1"].update({fold_id:f1_score(ytest,yhat, average='macro')})
+                    self.history["F1"].update({fold_id:f1_score(ytest,yhat, average='weighted')})
                 fold_id+=1
         else:
             xtrain,xtest,ytrain,ytest = train_test_split(X,y, test_size = 1-self.setting["rate"])
@@ -95,7 +95,7 @@ class Model_AI:
             if self.setting["LogLoss"]:
                 self.history["LogLoss"].update({0:log_loss(ytest,yhat_p)})
             if self.setting["F1"]:
-                self.history["F1"].update({0:f1_score(ytest,yhat, average='macro')})
+                self.history["F1"].update({0:f1_score(ytest,yhat, average='weighted')})
         self.model = Model
         print(self.history)
 
