@@ -27,12 +27,15 @@ class OnehotEncoder:
         return ba
 
 class Dataset:
-    def __init__(self,path_data):
+    def __init__(self,path_data,typedata="path"):
         self.data=None
         self.encoder={}
         self.features = []
         self.str_col=[]
-        self.origin_data = pd.read_csv(path_data)
+        if typedata=="df":
+            self.origin_data = path_data.copy()
+        else:
+            self.origin_data = pd.read_csv(path_data)
         if len(self.origin_data.columns)==1:
             self.origin_data = pd.read_table(path_data,sep=";")
 
@@ -54,18 +57,25 @@ class Dataset:
                 self.encoder.update({i:LaEn})
                 self.data.drop(i,axis=1,inplace=True)
         self.features_value = list(filter(lambda x: x!=self.target, self.data.columns))
+        print(f"self.features_value:{self.features_value}")
         return self.target, self.features_value
+
     def get_feature_target(self,features_list,target,pca=False, pca_n=1):
         features_list+=[target]
         target_col,feature_col = self.process_data(self.origin_data[features_list])
         if pca:
             return self.get_pca_feature(pca_n,feature_col), self.data[[target_col]].values
         return self.data[feature_col].values, self.data[[target_col]].values
+
     def get_pca_feature(self, n_components_user_choose,feature_col):
-        n_components = n_components_user_choose - len(self.str_col) + len(self.data.columns) - len(self.origin_data.columns)
+        n_components = n_components_user_choose #- len(self.str_col) + len(self.data.columns) - len(self.origin_data.columns)
+        #print(f"n_components:{n_components}")
         self.pca = PCA(n_components=n_components)
-        self.pca_features = self.pca.fit_transform(self.data[[feature_col]].values)
-        return self.pca_features
+        self.pca_features = self.pca.fit_transform(self.data[feature_col].values)
+        #print(f"PCA:{self.pca_features.astype(np.float32)}")
+        return self.pca_features.astype(np.float32)
+
+
 class Model_AI:
     def __init__(self,dataset,setting):
         self.data= dataset
@@ -77,22 +87,24 @@ class Model_AI:
             self.history["F1"]={}
 
     def fit(self):
-        if self.setting["pca"]:
-            X,y = self.data.get_feature_target(self.setting["feature_list"],self.setting["target"],True,self.setting["pca_n"])
-        else:
-            X,y = self.data.get_feature_target(self.setting["feature_list"],self.setting["target"])
+        X,y = self.data.get_feature_target(self.setting["feature_list"],self.setting["target"])
         if self.setting["kfold"]:
-            kf = KFold(n_splits=self.setting["K"])
+            kf = KFold(n_splits=self.setting["K"], shuffle=True)
             fold_id=0
             for train_index, test_index in kf.split(X):
                 xtrain, xtest = X[train_index], X[test_index]
                 ytrain, ytest = y[train_index], y[test_index]
 
+                if self.setting["pca"]:
+                    PCA_Model = PCA(self.setting["pca_n"])
+                    xtrain = PCA_Model.fit_transform(xtrain)
+
                 Model = LogisticRegression()
                 Model.fit(xtrain,ytrain)
+                if self.setting["pca"]:
+                    xtest = PCA_Model.transform(xtest)
                 yhat = Model.predict(xtest)
                 yhat_p = Model.predict_proba(xtest)
-                #print(yhat)
                 if self.setting["LogLoss"]:
                     self.history["LogLoss"].update({fold_id:log_loss(ytest,yhat_p)})
                 if self.setting["F1"]:
@@ -109,7 +121,7 @@ class Model_AI:
             if self.setting["F1"]:
                 self.history["F1"].update({0:f1_score(ytest,yhat, average='weighted')})
         self.model = Model
-        print(self.history)
+        #print(self.history)
 
     def plot_history(self):
         data = pd.DataFrame(self.history)
@@ -141,7 +153,7 @@ class Model_AI:
         # Add some text for labels, title and custom x-axis tick labels, etc.
         ax.set_ylabel('Error')
         #ax.set_yscale("log")
-        ax.set_title(f'Error of {title[0] if len(title)<1 else "and".join(title)}')
+        ax.set_title(f'Error of {title[0] if len(title)<1 else " and ".join(title)}')
         ax.set_xticks(x, labels)
         ax.legend()
 
