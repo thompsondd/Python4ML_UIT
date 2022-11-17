@@ -41,6 +41,14 @@ if data is not None:
     if kfold == False:
         rate = st.number_input("Enter the rate of train dataset",key="rate_train", value=0.1, min_value=0.1, max_value=1.0, step=0.01)
         setting.update({"rate":rate})
+    
+    # Select PCA
+    st.write(f"Do you want to use PCA for reducing demensions")
+    pca = st.checkbox(f"PCA",key="PCA")
+    if pca:
+        reduce = st.number_input("Enter components",key="pca_n", step=1, min_value=1, max_value = len(dataset.origin_data.columns), value=1)
+        setting.update({"pca_n":reduce})
+    setting.update({"pca":pca})
 
     # Select metric
     st.write("Select at least one metric for evaluating model")

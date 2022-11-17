@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import Normalizer
 import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
 
 class OnehotEncoder:
     def __init__(self):
@@ -52,11 +53,19 @@ class Dataset:
                     self.data[key]=temp_data[id]
                 self.encoder.update({i:LaEn})
                 self.data.drop(i,axis=1,inplace=True)
-        return self.target, list(filter(lambda x: x!=self.target, self.data.columns))
-    def get_feature_target(self,features_list,target):
+        self.features_value = list(filter(lambda x: x!=self.target, self.data.columns))
+        return self.target, self.features_value
+    def get_feature_target(self,features_list,target,pca=False, pca_n=1):
         features_list+=[target]
         target_col,feature_col = self.process_data(self.origin_data[features_list])
+        if pca:
+            return self.get_pca_feature(pca_n,feature_col), self.data[[target_col]].values
         return self.data[feature_col].values, self.data[[target_col]].values
+    def get_pca_feature(self, n_components_user_choose,feature_col):
+        n_components = n_components_user_choose - len(self.str_col) + len(self.data.columns) - len(self.origin_data.columns)
+        self.pca = PCA(n_components=n_components)
+        self.pca_features = self.pca.fit_transform(self.data[[feature_col]].values)
+        return self.pca_features
 class Model_AI:
     def __init__(self,dataset,setting):
         self.data= dataset
@@ -68,7 +77,10 @@ class Model_AI:
             self.history["F1"]={}
 
     def fit(self):
-        X,y = self.data.get_feature_target(self.setting["feature_list"],self.setting["target"])
+        if self.setting["pca"]:
+            X,y = self.data.get_feature_target(self.setting["feature_list"],self.setting["target"],True,self.setting["pca_n"])
+        else:
+            X,y = self.data.get_feature_target(self.setting["feature_list"],self.setting["target"])
         if self.setting["kfold"]:
             kf = KFold(n_splits=self.setting["K"])
             fold_id=0
