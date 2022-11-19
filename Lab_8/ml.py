@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import mean_squared_error, mean_absolute_error, log_loss, f1_score
 from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import Normalizer
@@ -99,7 +100,7 @@ class Model_AI:
                     PCA_Model = PCA(self.setting["pca_n"])
                     xtrain = PCA_Model.fit_transform(xtrain)
 
-                Model = LogisticRegression()
+                Model = RandomForestClassifier()
                 Model.fit(xtrain,ytrain)
                 if self.setting["pca"]:
                     xtest = PCA_Model.transform(xtest)
@@ -112,7 +113,7 @@ class Model_AI:
                 fold_id+=1
         else:
             xtrain,xtest,ytrain,ytest = train_test_split(X,y, test_size = 1-self.setting["rate"])
-            Model = LogisticRegression()
+            Model = RandomForestClassifier()
             Model.fit(xtrain,ytrain)
             yhat = Model.predict(xtest)
             yhat_p = Model.predict_proba(xtest)
