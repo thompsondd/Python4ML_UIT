@@ -1,10 +1,15 @@
+'''
+Sinh viên thực hiện: Nguyễn Huỳnh Hải Đăng
+MSSV: 20521159
+'''
+
 import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import ml
 import sklearn.datasets as datasets
-#st.title("My First Dang's Web")
+
 
 #1. Markdown
 st.markdown("""
@@ -12,16 +17,24 @@ st.markdown("""
 """)
 #data = st.file_uploader("Tải file dữ liệu về lương để AI dự đoán",key="data")
 setting={}
+class count_section:
+    def __init__(self):
+        self.number = 0
+    def __call__(self):
+        self.number+=1
+        return self.number
 
 if True:
 #    byte_data=data.getvalue()
 #    with open(f"./data/{data.name}","wb+") as f:
 #        f.write(byte_data)
-    
+    get_num_section = count_section()
     # Select input feature
+    st.markdown(f"""## {get_num_section()}.Data""")
+
     X,y = datasets.load_wine(return_X_y=True, as_frame=True)
     df = X.copy()
-    df["label"]=y
+    df["class"]=y
     df = df.sample(frac=1).reset_index(drop=True)
 
     dataset = ml.Dataset(df,"df")
@@ -31,6 +44,7 @@ if True:
     get_feature_inputs={}
     target = dataset.origin_data.columns[-1]
 
+    st.markdown(f"""## {get_num_section()}.Select features as input""")
     st.write("Select features as input features")
     for i in list(dataset.origin_data.columns)[:-1]:
         get_feature_inputs.update({i:st.checkbox(f"{i}",key=f"feature_select_{i}")})
@@ -39,18 +53,24 @@ if True:
     st.write(f"Output features: {target}")
 
     # Select K-Fold
+    st.markdown(f"""## {get_num_section()}.Select K-Fold Cross validation""")
     kfold = st.checkbox(f"K-Fold Cross validation",key="kfold")
     setting.update({"kfold":kfold})
     if kfold:
-        K = st.number_input(f"Enter K between 2 and {n_selected_features}",key="rate_train", step=1, min_value=2, max_value=n_selected_features, value=2)
-        setting.update({"K":K})
+        if n_selected_features==0:
+            st.error("Please select at lease a feature")
+        else:
+            K = st.number_input(f"Enter K between 2 and {n_selected_features}",key="rate_train", step=1, min_value=2, max_value=n_selected_features, value=2)
+            setting.update({"K":K})
 
     # Select the rate of train dataset
     if kfold == False:
+        st.markdown(f"""## {get_num_section()}.Select Train/test split""")
         rate = st.number_input("Enter the rate of train dataset",key="rate_train", value=0.1, min_value=0.1, max_value=1.0, step=0.01)
         setting.update({"rate":rate})
     
     # Select PCA
+    st.markdown(f"""## {get_num_section()}.Select PCA""")
     st.write(f"Do you want to use PCA for reducing demensions")
     pca = st.checkbox(f"PCA",key="PCA")
     if pca:
@@ -62,6 +82,7 @@ if True:
     setting.update({"pca":pca})
 
     # Select metric
+    st.markdown(f"""## {get_num_section()}.Select metrics""")
     st.write("Select at least one metric for evaluating model")
     setting.update({"F1":st.checkbox(f"F1",key="F1")})
     setting.update({"LogLoss":st.checkbox(f"LogLoss",key="LogLoss")})
