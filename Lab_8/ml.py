@@ -81,6 +81,7 @@ class Model_AI:
     def __init__(self,dataset,setting):
         self.data= dataset
         self.setting = setting
+        self.AbsModel = RandomForestClassifier
         self.history = {}
         if self.setting["LogLoss"]:
             self.history["LogLoss"]={}
@@ -100,7 +101,7 @@ class Model_AI:
                     PCA_Model = PCA(self.setting["pca_n"])
                     xtrain = PCA_Model.fit_transform(xtrain)
 
-                Model = RandomForestClassifier()
+                Model = self.AbsModel()
                 Model.fit(xtrain,ytrain)
                 if self.setting["pca"]:
                     xtest = PCA_Model.transform(xtest)
@@ -113,7 +114,7 @@ class Model_AI:
                 fold_id+=1
         else:
             xtrain,xtest,ytrain,ytest = train_test_split(X,y, test_size = 1-self.setting["rate"])
-            Model = RandomForestClassifier()
+            Model = self.AbsModel()
             Model.fit(xtrain,ytrain)
             yhat = Model.predict(xtest)
             yhat_p = Model.predict_proba(xtest)
