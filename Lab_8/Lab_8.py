@@ -1,3 +1,8 @@
+'''
+Sinh viên thực hiện: Nguyễn Huỳnh Hải Đăng
+MSSV: 20521159
+'''
+
 import streamlit as st
 import pandas as pd
 import numpy as np
