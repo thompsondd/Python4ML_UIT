@@ -68,14 +68,6 @@ class Dataset:
             return self.get_pca_feature(pca_n,feature_col), self.data[[target_col]].values
         return self.data[feature_col].values, self.data[[target_col]].values
 
-    def get_pca_feature(self, n_components_user_choose,feature_col):
-        n_components = n_components_user_choose #- len(self.str_col) + len(self.data.columns) - len(self.origin_data.columns)
-        #print(f"n_components:{n_components}")
-        self.pca = PCA(n_components=n_components)
-        self.pca_features = self.pca.fit_transform(self.data[feature_col].values)
-        #print(f"PCA:{self.pca_features.astype(np.float32)}")
-        return self.pca_features.astype(np.float32)
-
 
 class Model_AI:
     def __init__(self,dataset,setting):
@@ -115,7 +107,16 @@ class Model_AI:
         else:
             xtrain,xtest,ytrain,ytest = train_test_split(X,y, test_size = 1-self.setting["rate"])
             Model = self.AbsModel()
+
+            if self.setting["pca"]:
+                PCA_Model = PCA(self.setting["pca_n"])
+                xtrain = PCA_Model.fit_transform(xtrain)
+
             Model.fit(xtrain,ytrain)
+
+            if self.setting["pca"]:
+                xtest = PCA_Model.transform(xtest)
+
             yhat = Model.predict(xtest)
             yhat_p = Model.predict_proba(xtest)
             if self.setting["LogLoss"]:
