@@ -33,15 +33,17 @@ class Dataset:
         self.encoder={}
         self.features = []
         self.str_col=[]
+        self.target_encoder = None
         if typedata=="df":
             self.origin_data = path_data.copy()
         else:
-            self.origin_data = pd.read_csv(path_data)
+            self.origin_data = pd.read_csv(path_data).sample(frac=1).reset_index(drop=True)
         if len(self.origin_data.columns)==1:
             self.origin_data = pd.read_table(path_data,sep=";")
 
     def check_str_type(self, word):
         return str(type(word)).split()[1].split("'")[1] == "str"
+
     def process_data(self, data):
         self.data = data.copy()
         self.features.append(list(self.data.columns))
@@ -85,6 +87,8 @@ class Model_AI:
         if self.setting["kfold"]:
             kf = KFold(n_splits=self.setting["K"], shuffle=True)
             fold_id=0
+            print(f"X={X}")
+            print(f"y={y}")
             for train_index, test_index in kf.split(X):
                 scaler = MinMaxScaler()
                 xtrain, xtest = X[train_index], X[test_index]
@@ -103,6 +107,8 @@ class Model_AI:
                     xtest = PCA_Model.transform(xtest)
                 yhat = Model.predict(xtest)
                 yhat_p = Model.predict_proba(xtest)
+                #print(f"yhat1={yhat}")
+                #print(f"yhat_p1={yhat_p}")
                 if self.setting["LogLoss"]:
                     self.history["LogLoss"].update({fold_id:log_loss(ytest,yhat_p)})
                 if self.setting["F1"]:
@@ -123,6 +129,8 @@ class Model_AI:
 
             yhat = Model.predict(xtest)
             yhat_p = Model.predict_proba(xtest)
+            print(f"yhat2={yhat}")
+            print(f"yhat_p2={yhat_p}")
             if self.setting["LogLoss"]:
                 self.history["LogLoss"].update({0:log_loss(ytest,yhat_p)})
             if self.setting["F1"]:
@@ -161,9 +169,9 @@ class Model_AI:
         except:
             pass
         # Add some text for labels, title and custom x-axis tick labels, etc.
-        ax.set_ylabel('Error')
+        ax.set_ylabel('Value')
         #ax.set_yscale("log")
-        ax.set_title(f'Error of {title[0] if len(title)<1 else " and ".join(title)}')
+        ax.set_title(f'{title[0] if len(title)<1 else " and ".join(title)}')
         ax.set_xticks(x, labels)
         ax.legend()
 
@@ -189,3 +197,48 @@ class Model_AI:
         features = self.extract_vector(features)
         return self.best_model.predict([features]).reshape(1)[0]
 
+def search_PCA(dataset:Dataset,setting:dict, limit_component:int ) -> tuple:
+    history ={"f1":{},"log_loss":{}}
+    best = {"c":1,"f1":0}
+    setting = setting.copy()
+    for i in range(1,limit_component+1):
+        setting["pca"] = True
+        setting["pca_n"] = i
+        model = Model_AI(dataset,setting)
+        model.fit()
+        f1, log_loss = list(model.get_value_metrics.values())
+        history["f1"].update({i:f1})
+        history["log_loss"].update({i:log_loss})
+
+        if history["f1"][i]>best["f1"]:
+            best["c"] = i
+            best["f1"] = history["f1"][i]
+
+    data = pd.DataFrame(history)
+    labels = list(data.index)
+    fig, ax = plt.subplots()
+    title = []
+    try:
+        F1 = [i for i in data["f1"].values]
+        rects1= ax.bar(labels, F1, label='f1', color="green")
+        ax.scatter(labels, F1, label='f1', color="green")
+        title.append("f1")
+    except:
+        pass
+    try:
+        LogLoss = [i for i in data["log_loss"].values]
+        rects2=ax.plot(labels, LogLoss, label='log_loss',color="blue")
+        ax.scatter(labels, LogLoss, label='log_loss',color="blue")
+        title.append("log_loss")
+    except:
+        pass
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('F1 Score')
+    #ax.set_yscale("log")
+    ax.set_title("F1 score with different component")
+    #ax.set_xticks(x, labels)
+    ax.legend()
+    #ax.bar_label(rects1, padding=3)
+    #ax.bar_label(rects2, padding=3)
+    fig.tight_layout()
+    return fig,best
