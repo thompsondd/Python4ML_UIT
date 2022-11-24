@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import ml
 import sklearn.datasets as datasets
-
+import math
 
 #1. Markdown
 st.markdown("""
@@ -25,10 +25,8 @@ class count_section:
         return self.number
 
 if True:
-#    byte_data=data.getvalue()
-#    with open(f"./data/{data.name}","wb+") as f:
-#        f.write(byte_data)
     get_num_section = count_section()
+
     # Select input feature
     st.markdown(f"""## {get_num_section()}.Data""")
 
@@ -41,51 +39,110 @@ if True:
 
     st.dataframe(dataset.origin_data)
 
+    if "select_all_status" not in st.session_state:
+        st.session_state["select_all_status"] = False
+    def set_select_all_status():
+        st.session_state.select_all_status = True
+    def reset_select_all_status():
+        st.session_state.select_all_status = False
+
     get_feature_inputs={}
     target = dataset.origin_data.columns[-1]
 
     st.markdown(f"""## {get_num_section()}.Select features as input""")
     st.write("Select features as input features")
-    for i in list(dataset.origin_data.columns)[:-1]:
-        get_feature_inputs.update({i:st.checkbox(f"{i}",key=f"feature_select_{i}")})
+    if not st.session_state.select_all_status:
+        for i in list(dataset.origin_data.columns)[:-1]:
+            get_feature_inputs.update({i:st.checkbox(f"{i}",key=f"feature_select_{i}")})
+    else:
+        get_feature_inputs={}
+        for i in list(dataset.origin_data.columns)[:-1]:
+            get_feature_inputs.update({i:st.checkbox(f"{i}",key=f"feature_select_{i}",value=True)})
+    st.button("Select all", on_click = set_select_all_status)
+    st.button("Clear all", on_click = reset_select_all_status)
     n_selected_features = np.sum(list(get_feature_inputs.values()))
+
     # Select output feature
     st.write(f"Output features: {target}")
+    if "k_fold_select" not in st.session_state:
+        st.session_state["k_fold_select"]=False
+    def set_kflod():
+        st.session_state["k_fold_select"]=not st.session_state["k_fold_select"]
+        
+    if not st.session_state["k_fold_select"]:
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            # Select K-Fold
+            st.markdown(f"""## {get_num_section()}.Select K-Fold Cross validation""")
+            kfold = st.checkbox(f"K-Fold Cross validation",key="kfold",on_change =set_kflod)
+            #st.session_state.k_fold_select=kfold
+            setting.update({"kfold":kfold})
 
-    # Select K-Fold
-    st.markdown(f"""## {get_num_section()}.Select K-Fold Cross validation""")
-    kfold = st.checkbox(f"K-Fold Cross validation",key="kfold")
-    setting.update({"kfold":kfold})
-    if kfold:
-        if n_selected_features==0:
-            st.error("Please select at lease a feature")
-        else:
-            K = st.number_input(f"Enter K between 2 and {n_selected_features}",key="rate_train", step=1, min_value=2, max_value=n_selected_features, value=2)
-            setting.update({"K":K})
+            if kfold:
+                if n_selected_features<3:
+                    st.error("Please select at least THREE features")
+                else:
+                    K = st.slider(f"Select K between 2 and {n_selected_features}",key="rate_train", step=1, min_value=2, max_value=int(n_selected_features), value=2)
+                    setting.update({"K":K})
+            # Select the rate of train dataset
+        with col2:
+            if kfold == False:
+                st.markdown(f"""## {get_num_section()}.Select Train/test split""")
+                rate = st.slider("Enter the rate of train dataset",key="rate_train", value=0.1, min_value=0.1, max_value=1.0, step=0.01)
+                st.write(f"Train rate : {int(rate*100)}%")
+                st.write(f"Test rate : {int((1-rate)*100)}%")
+                setting.update({"rate":rate})
+        with col3:
+            # Select PCA
+            st.markdown(f"""## {get_num_section()}.Select PCA""")
+            st.write(f"Do you want to use PCA for reducing demensions")
+            pca = st.checkbox(f"PCA",key="PCA")
+            if pca:
+                if n_selected_features<2:
+                    st.error("Please select at least TWO a feature")
+                else:
+                    reduce = st.slider(f"Select components bewteen 1 and {n_selected_features}",key="pca_n", step=1, min_value=1, max_value = int(n_selected_features), value=1)
+                    setting.update({"pca_n":reduce})
+            setting.update({"pca":pca})
+        with col4:
+            # Select metric
+            st.markdown(f"""## {get_num_section()}.Select metrics""")
+            st.write("Select at least one metric for evaluating model")
+            setting.update({"F1":st.checkbox(f"F1",key="F1")})
+            setting.update({"LogLoss":st.checkbox(f"LogLoss",key="LogLoss")})
+    else:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            # Select K-Fold
+            st.markdown(f"""## {get_num_section()}.Select K-Fold Cross validation""")
+            kfold = st.checkbox(f"K-Fold Cross validation",key="kfold",on_change =set_kflod)
+            setting.update({"kfold":kfold})
 
-    # Select the rate of train dataset
-    if kfold == False:
-        st.markdown(f"""## {get_num_section()}.Select Train/test split""")
-        rate = st.number_input("Enter the rate of train dataset",key="rate_train", value=0.1, min_value=0.1, max_value=1.0, step=0.01)
-        setting.update({"rate":rate})
-    
-    # Select PCA
-    st.markdown(f"""## {get_num_section()}.Select PCA""")
-    st.write(f"Do you want to use PCA for reducing demensions")
-    pca = st.checkbox(f"PCA",key="PCA")
-    if pca:
-        if n_selected_features==0:
-            st.error("Please select at lease a feature")
-        else:
-            reduce = st.number_input(f"Enter components bewteen 1 and {n_selected_features}",key="pca_n", step=1, min_value=1, max_value = n_selected_features, value=1)
-            setting.update({"pca_n":reduce})
-    setting.update({"pca":pca})
-
-    # Select metric
-    st.markdown(f"""## {get_num_section()}.Select metrics""")
-    st.write("Select at least one metric for evaluating model")
-    setting.update({"F1":st.checkbox(f"F1",key="F1")})
-    setting.update({"LogLoss":st.checkbox(f"LogLoss",key="LogLoss")})
+            if kfold:
+                if n_selected_features<3:
+                    st.error("Please select at least THREE features")
+                else:
+                    K = st.slider(f"Select K between 2 and {n_selected_features}",key="rate_train", step=1, min_value=2, max_value=int(n_selected_features), value=2)
+                    setting.update({"K":K})
+            # Select the rate of train dataset
+        with col2:
+            # Select PCA
+            st.markdown(f"""## {get_num_section()}.Select PCA""")
+            st.write(f"Do you want to use PCA for reducing demensions")
+            pca = st.checkbox(f"PCA",key="PCA")
+            if pca:
+                if n_selected_features<2:
+                    st.error("Please select at least TWO a feature")
+                else:
+                    reduce = st.slider(f"Select components bewteen 1 and {n_selected_features}",key="pca_n", step=1, min_value=1, max_value = int(n_selected_features), value=1)
+                    setting.update({"pca_n":reduce})
+            setting.update({"pca":pca})
+        with col3:
+            # Select metric
+            st.markdown(f"""## {get_num_section()}.Select metrics""")
+            st.write("Select at least one metric for evaluating model")
+            setting.update({"F1":st.checkbox(f"F1",key="F1")})
+            setting.update({"LogLoss":st.checkbox(f"LogLoss",key="LogLoss")})
     
     if st.button("Run",key="run"):
         if n_selected_features==0:
@@ -100,12 +157,8 @@ if True:
                 setting.update({"feature_list":feature_selected,"target":target})
                 model = ml.Model_AI(dataset, setting)
                 model.fit()
-                #h = pd.DataFrame(model.history)
-                #st.dataframe(h)
+
+                stats = model.get_value_metrics
+                for i in stats.keys():
+                    st.write(f"{i} : {stats[i]}")
                 st.pyplot(model.plot_history())
-        #for i in get_inputs:
-        #    if i not in model_salary.str_col:
-        #        get_inputs[i]=float(get_inputs[i])
-        ##st.write(f"Input={get_inputs}")
-        ##st.write(f"Best model={model.best_model}")
-        #st.success(f"Salary = {model_salary.predict(get_inputs)}")

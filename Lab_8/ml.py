@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 import numpy as np
 from sklearn.metrics import mean_squared_error, mean_absolute_error, log_loss, f1_score
@@ -9,6 +8,7 @@ from sklearn.model_selection import KFold
 from sklearn.preprocessing import Normalizer
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import MinMaxScaler
 
 class OnehotEncoder:
     def __init__(self):
@@ -86,7 +86,11 @@ class Model_AI:
             kf = KFold(n_splits=self.setting["K"], shuffle=True)
             fold_id=0
             for train_index, test_index in kf.split(X):
+                scaler = MinMaxScaler()
                 xtrain, xtest = X[train_index], X[test_index]
+                xtrain = scaler.fit_transform(xtrain)
+                xtest = scaler.transform(xtest)
+
                 ytrain, ytest = y[train_index], y[test_index]
 
                 if self.setting["pca"]:
@@ -125,6 +129,9 @@ class Model_AI:
                 self.history["F1"].update({0:f1_score(ytest,yhat, average='weighted')})
         self.model = Model
         #print(self.history)
+    @property
+    def get_value_metrics(self):
+        return {"f1":np.mean(list(self.history["F1"].values())), "LogLoss":np.mean(list(self.history["LogLoss"].values()))}
 
     def plot_history(self):
         data = pd.DataFrame(self.history)
