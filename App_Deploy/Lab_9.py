@@ -26,14 +26,15 @@ class count_section:
 data = st.file_uploader("Tải file dữ liệu về lương để AI dự đoán",key="data")
 setting={}
 if data is not None:
-    columns1, columns2 = st.columns(2)
-    byte_data=data.getvalue()
-    with open(f"./data/{data.name}","wb+") as f:
-        f.write(byte_data)
+    #columns1, columns2 = st.columns(2)
+    #byte_data=data.getvalue()
+    #with open(f"./data/{data.name}","wb+") as f:
+    #    f.write(byte_data)
 
     get_num_section = count_section()
-
-    dataset = ml.Dataset(f"./data/{data.name}")
+    
+    dataset = pd.read_csv(data)
+    dataset = ml.Dataset(dataset,"df")
     
     target = dataset.origin_data.columns[0]
     st.subheader(f"Output feature: {target}")
