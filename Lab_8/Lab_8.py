@@ -41,6 +41,7 @@ if True:
 
     if "select_all_status" not in st.session_state:
         st.session_state["select_all_status"] = False
+
     def set_select_all_status():
         st.session_state.select_all_status = True
     def reset_select_all_status():

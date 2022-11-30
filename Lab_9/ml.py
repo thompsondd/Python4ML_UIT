@@ -82,13 +82,13 @@ class Model_AI:
         if self.setting["F1"]:
             self.history["F1"]={}
 
-    def fit(self):
+    def fit(self, a=""):
         X,y = self.data.get_feature_target(self.setting["feature_list"],self.setting["target"])
         if self.setting["kfold"]:
             kf = KFold(n_splits=self.setting["K"], shuffle=True)
             fold_id=0
-            print(f"X={X}")
-            print(f"y={y}")
+            print(f"{a} - X={X}")
+            print(f"{a} - y={y}")
             for train_index, test_index in kf.split(X):
                 scaler = MinMaxScaler()
                 xtrain, xtest = X[train_index], X[test_index]
@@ -132,6 +132,7 @@ class Model_AI:
             print(f"yhat2={yhat}")
             print(f"yhat_p2={yhat_p}")
             if self.setting["LogLoss"]:
+                print("yhat_p={yhat_p}")
                 self.history["LogLoss"].update({0:log_loss(ytest,yhat_p)})
             if self.setting["F1"]:
                 self.history["F1"].update({0:f1_score(ytest,yhat, average='weighted')})
@@ -205,7 +206,7 @@ def search_PCA(dataset:Dataset,setting:dict, limit_component:int ) -> tuple:
         setting["pca"] = True
         setting["pca_n"] = i
         model = Model_AI(dataset,setting)
-        model.fit()
+        model.fit(a="Cal from search PCA")
         f1, log_loss = list(model.get_value_metrics.values())
         history["f1"].update({i:f1})
         history["log_loss"].update({i:log_loss})
