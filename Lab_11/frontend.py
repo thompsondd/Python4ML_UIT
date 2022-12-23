@@ -66,7 +66,7 @@ if data is not None:
             st.button("Select all", on_click = set_select_all_status)
         with colBut2:
             st.button("Clear all", on_click = reset_select_all_status)
-        n_selected_features = np.sum(list(get_feature_inputs.values()))
+        n_selected_features = int(dataset.getLenOriData()*0.03) if np.sum(list(get_feature_inputs.values()))>0 else 0 
 
     # Select output feature
     if "k_fold_select" not in st.session_state:
@@ -84,7 +84,7 @@ if data is not None:
             setting.update({"kfold":kfold})
 
             if kfold:
-                if n_selected_features<3:
+                if n_selected_features<1:
                     st.error("Please select at least THREE features")
                 else:
                     K = st.slider(f"Select K between 2 and {n_selected_features}",key="rate_train", step=1, min_value=2, max_value=int(n_selected_features), value=2)
@@ -112,7 +112,7 @@ if data is not None:
             setting.update({"kfold":kfold})
 
             if kfold:
-                if n_selected_features<3:
+                if n_selected_features<1:
                     st.error("Please select at least THREE features")
                 else:
                     K = st.slider(f"Select K between 2 and {n_selected_features}",key="rate_train", step=1, min_value=2, max_value=int(n_selected_features), value=2)

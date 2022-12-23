@@ -47,6 +47,8 @@ class Dataset:
         print(f"feature_col:{feature_col}")
         print(f"target_col:{target_col}")
         return self.data[feature_col].values, self.data[[target_col]].values
+    def getLenOriData(self):
+        return len(self.origin_data[self.origin_data.columns[0]].values)
 
 
 class Model_AI:
