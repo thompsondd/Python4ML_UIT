@@ -114,23 +114,28 @@ class Model_AI:
                 "LogLoss":{model_key:np.mean(list(self.history["LogLoss"][model_key].values())) for model_key in self.history["LogLoss"].keys()}}
 
     def plot_history(self):
-        fig, ax = plt.subplots(ncols=2,nrows=1)
+        fig, ax = plt.subplots(nrows=2)
         title = []
         history = self.history
-        for i in history.keys():
-            for model_R in history[i].keys():
+        for idx,i in enumerate(history.keys()):
+            for j,model_R in enumerate(history[i].keys()):
                 h = history[i][model_R]
                 print(h)
                 try:
-                    v = [i for i in list(h.values())]
-                    label = [i for i in range(len(v))]
-                    print(v)
-                    ax[i] = plt.bar(label, v, label=model_R)
+                    v = np.array([i for i in list(h.values())])
+                    label = np.array([i for i in range(len(v))])
+                    print(f"i:{i}")
+                    ax[idx].bar(label+0.2*j, v, label=model_R, width=0.2)
                     #ax[i].scatter([i for i in range(len(F1))], F1, label=model_R)
                     #title.append(i)
+                    #ax[idx].legend(loc='lower right')
+                    ax[idx].set_title(i)
+                    ax[idx].set_xticks([i+0.3 for i in range(len(v))])
+                    ax[idx].set_xticklabels([str(i+1) for i in range(len(v))])
                 except Exception as e:
                     print(f"Error in plot: {e}")
                     raise e
+        ax[-1].legend(loc='lower right',bbox_to_anchor=(1.2,0.8))
             #try:
             #    LogLoss = [i for i in data["log_loss"].values]
             #    rects2=ax.plot(labels, LogLoss, label='log_loss',color="blue")
