@@ -124,24 +124,6 @@ if data is not None:
             st.write("Select at least one metric for evaluating model")
             setting.update({"F1":st.checkbox(f"F1",key="F1")})
             setting.update({"LogLoss":st.checkbox(f"LogLoss",key="LogLoss")})
-    # Select PCA
-    #with st.container():
-    #    st.subheader(f"{get_num_section()}.Select PCA")
-    #    st.write(f"Do you want to use PCA for reducing demensions")
-    #    pca = st.checkbox(f"PCA",key="PCA")
-    #    if pca:
-    #        if n_selected_features<2:
-    #            st.error("Please select at lease a feature")
-    #        elif (setting["F1"] or setting["LogLoss"])==False:
-    #            st.error("Please select a metric for evaluation")
-    #        else:
-    #            feature_selected = [ i for i in get_feature_inputs.keys() if get_feature_inputs[i]]
-    #            setting.update({"feature_list":feature_selected,"target":target})
-    #            
-    #            fig, best = ml.search_PCA(dataset, setting, n_selected_features)
-    #            st.pyplot(fig)
-    #            reduce = st.slider(f"Select components bewteen 1 and {n_selected_features}",key="pca_n", step=1, min_value=1, max_value = int(n_selected_features), value=1)
-    #            setting.update({"pca_n":reduce})
     setting.update({"pca":False})
     
     if st.button("Run",key="run"):

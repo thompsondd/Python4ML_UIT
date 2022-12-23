@@ -1,14 +1,17 @@
+'''
+Sinh viên thực hiện: Nguyễn Huỳnh Hải Đăng
+MSSV: 20521159
+'''
+
 import pandas as pd
 import numpy as np
-from sklearn.metrics import mean_squared_error, mean_absolute_error, log_loss, f1_score
+from sklearn.metrics import log_loss, f1_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
-from sklearn.preprocessing import Normalizer
 import matplotlib.pyplot as plt
-from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
 from xgboost import XGBClassifier
 
